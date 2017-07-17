@@ -48,13 +48,13 @@ class RegressionSolution:
 # Generate random sample data points given some pre-determined pattern function
 def generate_data(d_size, d_range, d_pattern):
     t_data = []
-    for i in range(0, d_size):
+    for j in range(0, d_size):
         # Pick random floating point number as the x values
         x = np.random.uniform(0, d_range)
         # Evaluate y values
         y = eval(d_pattern)
         # Apply noise, adding noise because noise distribution is centered around 0 (negative and positive values)
-        y = y + noise[i]
+        y = y + noise[j]
         t_data.append([x, y])
     return t_data
 
@@ -63,31 +63,29 @@ def generate_data(d_size, d_range, d_pattern):
 # Example form: (1/2)*((w1 + w2*x1 - t1)^2 + (w1 + w2*x2 - t2)^2) ...
 def generate_error_function(arr_weights, arr_data):
     expression = ""
-    for i in range(0, len(arr_weights)):
-        if i == 0:
-            expression = expression + str(arr_weights[i])
-        if i == 1:
-            expression = expression + " + " + str(arr_weights[i]) + " * {0}"
-        if i > 1:
-            expression = expression + " + " + str(arr_weights[i]) + " * {0}**" + str(i)
-
-
+    for j in range(0, len(arr_weights)):
+        if j == 0:
+            expression = expression + str(arr_weights[j])
+        if j == 1:
+            expression = expression + " + " + str(arr_weights[j]) + " * {0}"
+        if j > 1:
+            expression = expression + " + " + str(arr_weights[j]) + " * {0}**" + str(j)
 
     arr_inner_error_funcs = []
-    for i in range(0, len(arr_data)):
+    for j in range(0, len(arr_data)):
         arr_inner_error_funcs.append(
-            "(" + expression.format(arr_data[i][0]) + " - " + str(arr_data[i][1]) + ")**2")
+            "(" + expression.format(arr_data[j][0]) + " - " + str(arr_data[j][1]) + ")**2")
 
     # Generate the fully expanded error function (expanding out the summation)
-    error_function = ""
-    for i in range(0, len(arr_inner_error_funcs)):
-        if i == 0:
-            error_function = error_function + ".5 * (" + arr_inner_error_funcs[i]
+    err_func = ""
+    for j in range(0, len(arr_inner_error_funcs)):
+        if j == 0:
+            err_func = err_func + ".5 * (" + arr_inner_error_funcs[j]
         else:
-            error_function = error_function + " + " + arr_inner_error_funcs[i]
-    error_function = error_function + ")"
+            err_func = err_func + " + " + arr_inner_error_funcs[j]
+    err_func = err_func + ")"
 
-    return error_function
+    return err_func
 
 
 # Generate the full regression expression
@@ -145,8 +143,8 @@ def plot_solutions(d_range, expression, t_pattern, t_data):
     plt.show()
 
 
-training_data = generate_data(count_data_points, data_range, target_data_pattern)
-test_data = generate_data(count_data_points, data_range, target_data_pattern)
+training_data = generate_data(count_data_points, x_axis_range, target_data_pattern)
+test_data = generate_data(count_data_points, x_axis_range, target_data_pattern)
 
 for o in range(0, len(order_range)):
 
@@ -178,9 +176,9 @@ for o in range(0, len(order_range)):
     # Evaluate the root-mean-square error
     # Erms=(2*E(w*)/N)**(1/2)
     train_error = eval(generate_error_function(arr_weight_values, training_data))
-    train_erms = math.sqrt((2*train_error)/data_size)
+    train_erms = math.sqrt((2*train_error)/count_data_points)
     test_error = eval(generate_error_function(arr_weight_values, test_data))
-    test_erms = math.sqrt((2*test_error)/data_size)
+    test_erms = math.sqrt((2*test_error)/count_data_points)
 
     if isLoggingOn:
         print("Values for all w when solving the system of derivatives set to 0:")
@@ -196,7 +194,8 @@ for o in range(0, len(order_range)):
         print(test_erms)
         print("")
 
-    arr_regression_solutions.append(RegressionSolution(output_regression, order_range[o], weights, train_erms, test_erms))
+    arr_regression_solutions.append(
+        RegressionSolution(output_regression, order_range[o], weights, train_erms, test_erms))
 
 # TODO: Implement sortable object
 best_solution = None
@@ -215,4 +214,3 @@ print("Best Root Mean Square: " + str(best_solution.testing_root_mean_square))
 
 # Plot out all of the solutions and data
 plot_solutions(x_axis_range, best_solution.regression_expression, target_data_pattern, training_data)
-
